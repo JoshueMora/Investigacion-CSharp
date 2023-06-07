@@ -1,0 +1,165 @@
+using APIWeb.Models;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Data;
+using System.Linq;
+using System.Web;
+
+namespace APIWeb.Data
+{
+    public class UsuarioData
+    {
+        // REGISTRAR USUARIOS 
+        public static bool Registrar(Usuario oUsuario)
+        {
+            using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion)) //Generamos conexion con la base de datos
+            {
+                SqlCommand cmd = new SqlCommand("SP_registrar", oConexion); //generamos variable del procedimiento almacenado
+                cmd.CommandType = CommandType.StoredProcedure; //utilizamos los procedimientos almacenados
+                cmd.Parameters.AddWithValue("@cedula", oUsuario.cedula); //parametro y valor correspondiente
+                cmd.Parameters.AddWithValue("@nombre", oUsuario.nombre); //parametro y valor correspondiente
+                cmd.Parameters.AddWithValue("@telefono", oUsuario.telefono); //parametro y valor correspondiente
+                cmd.Parameters.AddWithValue("@correo", oUsuario.correo); //parametro y valor correspondiente
+
+                try //try catch para verificar la conexion entre el API y la base de datos
+                {
+                    oConexion.Open();
+                    cmd.ExecuteNonQuery();
+                    return true; //retornamos true si se logro ejecutar el procedimiento
+                }
+                catch (Exception ex)
+                {
+                    return false; //si no se logra devolvemos false
+                }
+            }
+        }
+
+        // MODIFICAR USUARIOS
+        public static bool Modificar(Usuario oUsuario)
+        {
+            using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion)) //Generamos conexion con la base de datos
+            {
+                SqlCommand cmd = new SqlCommand("SP_modificar", oConexion);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@idusuario", oUsuario.id); //Parametro de ID de usuario a modificar
+                cmd.Parameters.AddWithValue("@cedula", oUsuario.cedula);
+                cmd.Parameters.AddWithValue("@nombre", oUsuario.nombre);
+                cmd.Parameters.AddWithValue("@telefono", oUsuario.telefono);
+                cmd.Parameters.AddWithValue("@correo", oUsuario.correo);
+
+                try
+                {
+                    oConexion.Open();
+                    cmd.ExecuteNonQuery();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+            }
+        }
+
+        //LISTAR USUARIOS
+        public static List<Usuario> Listar()
+        {
+            List<Usuario> oListaUsuario = new List<Usuario>(); //Declaramos lista de clase objeto <Usuario>
+            using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion))
+            {
+                SqlCommand cmd = new SqlCommand("SP_listar", oConexion); //conexion con base de datos
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                try
+                {
+                    oConexion.Open();
+
+                    using (SqlDataReader dr = cmd.ExecuteReader()) //dr para lograr tomar los valores de la base de datos
+                    {
+
+                        while (dr.Read()) //mientras que lea datos, los agrega a la lista de usuarios
+                        {
+                            oListaUsuario.Add(new Usuario()
+                            {
+                                id = Convert.ToInt32(dr["id"]),
+                                cedula = dr["cedula"].ToString(),
+                                nombre = dr["nombre"].ToString(),
+                                telefono = dr["telefono"].ToString(),
+                                correo = dr["correo"].ToString()
+                            });
+                        }
+
+                    }
+
+                    return oListaUsuario; //retorna la lista
+                }
+                catch (Exception ex)
+                {
+                    return oListaUsuario; //igual retorna la lista, pero esta sera vacia
+                }
+            }
+        }
+
+        //OBTENER USUARIO
+        public static Usuario Obtener(int idusuario) //igual que el listar, pero en este caso se obtiene el usuario del id especificado
+        {
+            Usuario oUsuario = new Usuario();
+            using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion))
+            {
+                SqlCommand cmd = new SqlCommand("SP_obtener", oConexion);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@idusuario", idusuario); //pasamos el valor 
+
+                try
+                {
+                    oConexion.Open();
+
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+
+                        while (dr.Read())
+                        {
+                            oUsuario = new Usuario()
+                            {
+                                id = Convert.ToInt32(dr["id"]),
+                                cedula = dr["cedula"].ToString(),
+                                nombre = dr["nombre"].ToString(),
+                                telefono = dr["telefono"].ToString(),
+                                correo = dr["correo"].ToString()
+                            };
+                        }
+
+                    }
+
+                    return oUsuario;
+                }
+                catch (Exception ex)
+                {
+                    return oUsuario;
+                }
+            }
+        }
+
+        //ELIMINAR USUARIO
+        public static bool Eliminar(int id)
+        {
+            using (SqlConnection oConexion = new SqlConnection(Conexion.rutaConexion))
+            {
+                SqlCommand cmd = new SqlCommand("SP_eliminar", oConexion);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@idusuario", id); //valor del id a eliminar
+
+                try
+                {
+                    oConexion.Open();
+                    cmd.ExecuteNonQuery(); //ejecucion del comando delete
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+            }
+        }
+    }
+}
